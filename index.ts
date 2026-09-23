@@ -1,29 +1,53 @@
 import express from 'express';
 import dotenv from 'dotenv';
 
+import { setupEarlyMiddleware, setupErrorHandling } from './src/services/middleware';
+import {
+  initializeManagedAnthropicClient,
+  initializeManagedPgPool,
+} from './src/services/managed';
+import { createHealthRouter } from './src/services/health';
+import { createSpeechTherapyDataService } from './src/services/speech-therapy-data-service';
+import { startServer } from './src/services/server';
+
 dotenv.config();
 
-const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const DEFAULT_PORT = 3011;
 
-// Early middleware setup
-import { setupEarlyMiddleware } from './src/services/middleware';
-setupEarlyMiddleware(app);
+const bootstrap = (): express.Application => {
+  console.log('🚀 Starting speech-therapy-tracker-express-server bootstrap');
 
-// Health check routes
-import { createHealthRouter } from './src/services/health';
-app.use('/', createHealthRouter());
-app.use('/api/health', createHealthRouter());
+  const portFromEnv = Number(process.env.PORT);
+  const PORT =
+    Number.isFinite(portFromEnv) && portFromEnv > 0 ? portFromEnv : DEFAULT_PORT;
 
-// Error handling middleware (must be after all routes)
-import { setupErrorHandling } from './src/services/middleware';
-setupErrorHandling(app);
+  const app = express();
 
-// Start server
-import { startServer } from './src/services/server';
-startServer(app, {
-  port: PORT,
-  environment: process.env.NODE_ENV || 'development'
-});
+  setupEarlyMiddleware(app);
+  initializeManagedPgPool();
+  initializeManagedAnthropicClient();
 
-export default app;
+  app.use('/', createHealthRouter());
+  app.use('/api/health', createHealthRouter());
+  app.use('/api/data', createSpeechTherapyDataService());
+
+  setupErrorHandling(app);
+
+  startServer(app, {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+  });
+
+  return app;
+};
+
+let app: express.Application;
+
+try {
+  app = bootstrap();
+} catch (err) {
+  console.error('❌ [bootstrap] Failed to start server', err);
+  process.exit(1);
+}
+
+export default app!;

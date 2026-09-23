@@ -41,11 +41,12 @@ BEFORE implementing ANY feature, you MUST:
 - MUST NOT put business rules, HTTP, or orchestration in `src/data/`.
 - NEVER inline queries in handlers or `processX()` — call data functions instead.
 
-## Managed clients & edge
+## Managed clients
 
-- MUST use `getManagedSupabaseClient()` / `getManagedAnthropicClient()` when added; NEVER `createClient()` in handlers, services, or data code.
-- MUST initialize managed clients once at startup; null-check before use → `500`.
-- Supabase edge functions MUST ONLY call Railway endpoints.
+- MUST use `getManagedPgPool()`; NEVER `new Pool()` in handlers, services, or data code.
+- MUST initialize managed pool once at startup via `initializeManagedPgPool()`; null-check before use → `500`.
+- MUST use `getManagedAnthropicClient()` for vision import; NEVER `new Anthropic()` in handlers or services.
+- MUST read `DATABASE_URL` from env (server only — never in `NEXT_PUBLIC_*`).
 
 ## Logging
 
@@ -61,3 +62,5 @@ Use emoji prefixes: `🚀` `✅` `❌` `📥` `📤` `🤖` `💾`
 - [006 – Logging & error response standards](./architecture/006-logging-and-error-response-standards.md)
 - [007 – Starter template layout](./architecture/007-starter-template-layout.md)
 - [008 – Domain models](./architecture/008-domain-models.md)
+- [014 – Tube feed tracking](./architecture/014-tube-feed-tracking.md)
+- [016 – Speech therapy consumption](./architecture/016-speech-therapy-consumption.md)
