@@ -1,35 +1,67 @@
-# Speech Therapy Tracker — Express API
+# Speech Therapy Tracker Express Server
 
-Postgres API for speech exercises, ice-cube counts, and peg-tube feed logs. Pair with **speech-therapy-tracker-web** (port 3010).
+Local Postgres API for speech exercises, ice-cube counts, and peg-tube feed logs. **MIT** licensed.
 
-This API uses the **same Postgres database as My Health** (`my_health`). Point `DATABASE_URL` at that database so existing formulas, feed logs, exercises, and ice-cube rows show up here.
+Binds to **`127.0.0.1:3011`** only — not exposed on the network.
 
-## Run
+Companion UI: [speech-therapy-tracker-web](https://github.com/Luckee-Core/speech-therapy-tracker-web).
+
+- License: [LICENSE](./LICENSE)
+- Security: [SECURITY.md](./SECURITY.md)
+- Contributing: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Quickstart: [docs/oss-quickstart.md](./docs/oss-quickstart.md)
+- Wire contract: [docs/oss/wire-contract.md](./docs/oss/wire-contract.md)
+
+## Quick start
 
 ```bash
-cp .env.example .env
-# set DATABASE_URL to the same value as my-health-open-source-express-server
+git clone https://github.com/Luckee-Core/speech-therapy-tracker-express-server.git
+cd speech-therapy-tracker-express-server
 npm install
+cp .env.example .env
+# set DATABASE_URL, then apply schema if this is a fresh database
+psql "$DATABASE_URL" -f migrations/setup.sql
 npm run dev
 ```
 
-Default port is **3011**. Do not create a second database.
+Health: http://127.0.0.1:3011/api/health
 
-If this is a fresh machine with no My Health schema yet, apply My Health’s `migrations/setup.sql` (or this repo’s `migrations/setup.sql`, which is `IF NOT EXISTS` for the speech/tube-feed tables only). If My Health is already running locally, skip migrations — the tables already exist.
+```json
+{ "success": true, "data": { "status": "ok", "message": "...", "timestamp": "...", "environment": "..." } }
+```
 
-## Endpoints
+## Postgres
 
-- `GET /` and `GET /api/health` — health
-- `GET/POST/PATCH/DELETE /api/data/therapy-exercises`
-- `GET /api/data/therapy-exercise-logs` and increment / skip / due POSTs
-- `GET /api/data/speech-therapy-consumption` and `POST .../increment`
-- `POST /api/data/therapy-exercise-imports/preview` and `/commit` (Anthropic vision)
-- `GET /api/data/therapy-exercise-import-ai-exchanges`
-- `GET/POST/PATCH/DELETE /api/data/feed-formulas`
-- `GET /api/data/feed-logs`, `PUT /api/data/feed-logs`, `DELETE /api/data/feed-logs/:id`
+Point `DATABASE_URL` at the same local Postgres database My Health uses (`my_health`). Then run `migrations/setup.sql` (`IF NOT EXISTS` for therapy, ice-cube, tube-feed, and import tables). If those tables already exist, the script is safe to re-run.
+
+## API
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` and `/api/health` | Liveness (`{ success, data }`) |
+| `GET/POST/PATCH/DELETE` | `/api/data/therapy-exercises` | Homework catalog |
+| `GET` | `/api/data/therapy-exercise-logs` | Daily logs |
+| `POST` | `/api/data/therapy-exercise-logs/increment` | Increment completed count |
+| `POST` | `/api/data/therapy-exercise-logs/skip` | Mark skipped |
+| `POST` | `/api/data/therapy-exercise-logs/due` | Mark due |
+| `GET` | `/api/data/speech-therapy-consumption` | Ice-cube rows |
+| `POST` | `/api/data/speech-therapy-consumption/increment` | Apply quantity delta |
+| `POST` | `/api/data/therapy-exercise-imports/preview` | Anthropic vision (multipart file) |
+| `POST` | `/api/data/therapy-exercise-imports/commit` | Commit a previewed import |
+| `GET` | `/api/data/therapy-exercise-import-ai-exchanges` | Import AI exchange rows |
+| `GET/POST/PATCH/DELETE` | `/api/data/feed-formulas` | Formula catalog |
+| `GET` | `/api/data/feed-logs` | Pump snapshots |
+| `PUT` | `/api/data/feed-logs` | Upsert snapshot for `log_date` |
+| `DELETE` | `/api/data/feed-logs/:id` | Delete a snapshot |
 
 Photo import needs `ANTHROPIC_API_KEY`. Manual exercise CRUD works without it.
 
-## Architecture
+Success JSON: `{ "success": true, "data"? }`. Error JSON: `{ "success": false, "error": "..." }` with `400` or `500`.
 
-Follow `.cursor/rules/AGENTS.md` and `.cursor/architecture/`.
+## Pair with web UI
+
+Run [speech-therapy-tracker-web](https://github.com/Luckee-Core/speech-therapy-tracker-web) on port **3010** with:
+
+```env
+NEXT_PUBLIC_API_URL=http://127.0.0.1:3011
+```

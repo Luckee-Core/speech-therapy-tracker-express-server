@@ -2,6 +2,15 @@
   "name": "speech-therapy-tracker-express-server",
   "version": "0.1.0",
   "description": "Speech therapy, ice-cube consumption, and tube-feed API",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luckee-Core/speech-therapy-tracker-express-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Luckee-Core/speech-therapy-tracker-express-server/issues"
+  },
+  "homepage": "https://github.com/Luckee-Core/speech-therapy-tracker-express-server#readme",
   "main": "index.ts",
   "scripts": {
     "start": "ts-node index.ts",

@@ -3,8 +3,12 @@
  * Provides endpoints for monitoring server health and status
  */
 
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import { getHealthHandler } from './routes/get-health-handler';
 
+/**
+ * Factory for health routes mounted at `/` and `/api/health`.
+ */
 export const createHealthRouter = (): Router => {
   const router = Router();
 
@@ -12,14 +16,7 @@ export const createHealthRouter = (): Router => {
    * GET /
    * Basic health check endpoint
    */
-  router.get('/', (req: Request, res: Response) => {
-    res.json({
-      status: 'ok',
-      message: 'TroutHouseTech Express Server is running',
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
-    });
-  });
+  router.get('/', getHealthHandler);
 
   return router;
 };
